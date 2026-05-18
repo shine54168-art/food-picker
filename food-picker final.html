@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>🍜 Ăn Gì Đây?</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── NO overflow:hidden / position:fixed on body or html ── */
+html { height: 100%; }
+
+body {
+  font-family: 'Nunito', 'PingFang SC', 'Noto Sans', sans-serif;
+  min-height: 100%;
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-orient: vertical;
+  flex-direction: column;
+  -webkit-box-align: center;
+  align-items: center;
+  padding: 22px 16px 60px;
+  /* gradient via background — no pseudo element, no fixed overlay */
+  background: linear-gradient(160deg, #ffe4f0 0%, #ffecd2 40%, #eaf8f3 75%, #f3e5ff 100%);
+  background-attachment: fixed;
+}
+
+/* ── MAIN CONTENT — always on top with proper stacking context ── */
+.container {
+  width: 100%;
+  max-width: 480px;
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+}
+
+/* ── HEADER ── */
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+  -webkit-animation: popIn 0.55s cubic-bezier(.34,1.56,.64,1) both;
+  animation: popIn 0.55s cubic-bezier(.34,1.56,.64,1) both;
+}
+.header .crown { font-size: 38px; display: block; margin-bottom: 4px; }
+.header h1 {
+  font-size: clamp(18px, 5vw, 26px);
+  font-weight: 900; color: #c0394f; line-height: 1.28;
+  text-shadow: 2px 2px 0 rgba(255,255,255,0.65);
+}
+.header p { font-size: 12px; color: #9b6070; margin-top: 5px; font-weight: 700; }
+
+/* ── RESULT CARD ── */
+.result-area {
+  background: #fff;
+  border-radius: 22px;
+  padding: 24px 18px;
+  text-align: center;
+  border: 3px solid #ffb3c6;
+  margin-bottom: 16px;
+  min-height: 185px;
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-orient: vertical;
+  flex-direction: column;
+  -webkit-box-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  -webkit-animation: popIn 0.65s cubic-bezier(.34,1.56,.64,1) 0.08s both;
+  animation: popIn 0.65s cubic-bezier(.34,1.56,.64,1) 0.08s both;
+  -webkit-box-shadow: 0 5px 20px rgba(255,143,171,0.26);
+  box-shadow: 0 5px 20px rgba(255,143,171,0.26);
+}
+.result-area::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 5px;
+  background: linear-gradient(90deg, #ff8fab, #b39dff, #ffb3c6);
+  border-radius: 22px 22px 0 0;
+}
+
+.food-emoji {
+  font-size: 64px; display: block; margin-bottom: 10px; line-height: 1;
+  -webkit-transition: -webkit-transform 0.15s;
+  transition: transform 0.15s;
+}
+.food-emoji.spinning {
+  -webkit-animation: bounce 0.09s ease-in-out infinite alternate;
+  animation: bounce 0.09s ease-in-out infinite alternate;
+}
+@-webkit-keyframes bounce { from{-webkit-transform:scale(0.88);} to{-webkit-transform:scale(1.14);} }
+@keyframes bounce { from{transform:scale(0.88);} to{transform:scale(1.14);} }
+
+.food-name-vn { font-size: clamp(20px, 6vw, 30px); font-weight:900; color:#c0394f; margin-bottom:5px; letter-spacing:-0.3px; }
+.food-name-en { font-size: clamp(13px, 3.5vw, 15px); font-weight:700; color:#9b6070; margin-bottom:6px; }
+.food-name-zh { font-size: clamp(14px, 3.8vw, 18px); font-weight:800; color:#7c4dbc; background:#f0eaff; padding:4px 16px; border-radius:20px; display:inline-block; }
+
+.idle-text { font-size: 38px; display:block; margin-bottom:12px; }
+.idle-label { font-size: clamp(13px, 3.8vw, 16px); font-weight:700; color:#9b6070; line-height:1.7; }
+
+.result-reveal {
+  -webkit-animation: resultPop 0.46s cubic-bezier(.34,1.56,.64,1) both;
+  animation: resultPop 0.46s cubic-bezier(.34,1.56,.64,1) both;
+}
+@-webkit-keyframes resultPop {
+  0%  { -webkit-transform:scale(0.5) rotate(-8deg); opacity:0; }
+  65% { -webkit-transform:scale(1.08) rotate(2deg); opacity:1; }
+  100%{ -webkit-transform:scale(1) rotate(0);       opacity:1; }
+}
+@keyframes resultPop {
+  0%  { transform:scale(0.5) rotate(-8deg); opacity:0; }
+  65% { transform:scale(1.08) rotate(2deg); opacity:1; }
+  100%{ transform:scale(1) rotate(0);       opacity:1; }
+}
+
+/* ── PICK BUTTON ── */
+.btn-wrap {
+  display: -webkit-box; display:flex; -webkit-box-orient:vertical; flex-direction:column;
+  -webkit-box-align:center; align-items:center; gap:9px;
+  -webkit-animation: popIn 0.65s cubic-bezier(.34,1.56,.64,1) 0.15s both;
+  animation: popIn 0.65s cubic-bezier(.34,1.56,.64,1) 0.15s both;
+  position: relative; z-index: 2;
+}
+.pick-btn {
+  background: linear-gradient(135deg, #ff8fab, #ff6b9d 50%, #e05a7a);
+  color: #fff; border: none; border-radius: 50px;
+  padding: 17px 0; font-size: clamp(16px, 4.5vw, 20px); font-weight:900;
+  font-family: 'Nunito','PingFang SC',sans-serif; cursor:pointer;
+  -webkit-box-shadow: 0 5px 16px rgba(224,90,122,0.42);
+  box-shadow: 0 5px 16px rgba(224,90,122,0.42);
+  width:100%; max-width:310px;
+  /* CRITICAL for mobile tap reliability */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  -webkit-user-select: none; user-select: none;
+  position: relative; z-index: 2;
+  cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+}
+.pick-btn:active { opacity: 0.82; -webkit-transform:scale(0.96); transform:scale(0.96); }
+.pick-btn:disabled { opacity:0.68; }
+.hint { font-size:12px; color:#9b6070; font-weight:700; }
+
+/* ── LIST SECTION ── */
+.list-section {
+  margin-top:16px;
+  -webkit-animation: popIn 0.65s cubic-bezier(.34,1.56,.64,1) 0.22s both;
+  animation: popIn 0.65s cubic-bezier(.34,1.56,.64,1) 0.22s both;
+}
+
+.row-btn {
+  display: -webkit-box; display:flex; -webkit-box-align:center; align-items:center;
+  -webkit-box-pack:justify; justify-content:space-between; gap:8px; margin-bottom:10px;
+}
+
+.list-toggle {
+  -webkit-box-flex:1; flex:1; background:#fff;
+  border:2px solid #ffb3c6; border-radius:16px; padding:11px 14px;
+  font-size:13px; font-weight:700; color:#c0394f;
+  font-family:'Nunito','PingFang SC',sans-serif; cursor:pointer;
+  display:-webkit-box; display:flex; -webkit-box-align:center; align-items:center;
+  -webkit-box-pack:justify; justify-content:space-between;
+  -webkit-box-shadow:0 3px 9px rgba(255,143,171,0.2); box-shadow:0 3px 9px rgba(255,143,171,0.2);
+  touch-action:manipulation; -webkit-tap-highlight-color:rgba(0,0,0,0);
+  text-align:left; -webkit-appearance:none; appearance:none;
+}
+.list-toggle:active { background:#fff0f3; }
+.list-toggle .arrow { font-style:normal; font-size:12px; flex-shrink:0; margin-left:6px;
+  -webkit-transition:-webkit-transform 0.28s; transition:transform 0.28s; }
+.list-toggle.open .arrow { -webkit-transform:rotate(180deg); transform:rotate(180deg); }
+
+/* Edit mode toggle button */
+.edit-btn {
+  background:#fff; border:2px solid #d4b8ff; border-radius:16px;
+  padding:11px 14px; font-size:13px; font-weight:700; color:#7c4dbc;
+  font-family:'Nunito','PingFang SC',sans-serif; cursor:pointer;
+  -webkit-box-shadow:0 3px 9px rgba(180,140,255,0.18); box-shadow:0 3px 9px rgba(180,140,255,0.18);
+  touch-action:manipulation; -webkit-tap-highlight-color:rgba(0,0,0,0);
+  white-space:nowrap; flex-shrink:0; -webkit-appearance:none; appearance:none;
+}
+.edit-btn:active { background:#f5eeff; }
+.edit-btn.active { background:#f0eaff; border-color:#9c6fe4; }
+
+/* food grid */
+.food-grid { display:none; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+.food-grid.open { display:grid; }
+
+.food-item {
+  background:#fff; border-radius:14px; padding:10px 10px 9px;
+  border:2px solid transparent;
+  -webkit-box-shadow:0 2px 6px rgba(0,0,0,0.06); box-shadow:0 2px 6px rgba(0,0,0,0.06);
+  cursor:pointer; position:relative;
+  touch-action:manipulation; -webkit-tap-highlight-color:rgba(0,0,0,0);
+  -webkit-user-select:none; user-select:none;
+  -webkit-transition:border-color 0.16s; transition:border-color 0.16s;
+}
+.food-item:active { opacity:0.75; }
+.food-item.active { border-color:#ff8fab; background:#fff0f3; }
+
+.fi-emoji { font-size:22px; display:block; margin-bottom:3px; line-height:1; }
+.fi-vn  { font-size:12px; font-weight:800; color:#c0394f; line-height:1.25; }
+.fi-en  { font-size:10px; color:#9b6070; font-weight:600; margin-top:1px; }
+.fi-zh  { font-size:11px; color:#7c4dbc; font-weight:700; margin-top:2px; }
+
+/* delete button on each item */
+.del-btn {
+  display:none; position:absolute; top:-6px; right:-6px;
+  width:22px; height:22px; border-radius:50%;
+  background:#ff4f6d; color:#fff; border:2px solid #fff;
+  font-size:13px; font-weight:900; line-height:1;
+  -webkit-box-align:center; align-items:center; -webkit-box-pack:center; justify-content:center;
+  cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:rgba(0,0,0,0);
+  -webkit-box-shadow:0 2px 6px rgba(255,79,109,0.4); box-shadow:0 2px 6px rgba(255,79,109,0.4);
+  -webkit-appearance:none; appearance:none;
+  z-index: 3;
+}
+.del-btn:active { -webkit-transform:scale(0.88); transform:scale(0.88); }
+.edit-mode .del-btn { display:-webkit-box; display:flex; }
+
+/* ── ADD FORM ── */
+.add-form {
+  display:none; background:#fff; border-radius:18px;
+  padding:16px 14px; border:2px solid #d4b8ff; margin-bottom:10px;
+  -webkit-box-shadow:0 3px 12px rgba(180,140,255,0.15); box-shadow:0 3px 12px rgba(180,140,255,0.15);
+}
+.add-form.open { display:block; }
+
+.add-form h3 {
+  font-size:13px; font-weight:800; color:#7c4dbc; margin-bottom:12px; text-align:center;
+}
+.add-row { display:-webkit-box; display:flex; gap:8px; margin-bottom:8px; }
+.add-row.single { display:block; }
+
+.add-input {
+  -webkit-box-flex:1; flex:1; background:#faf7ff;
+  border:1.5px solid #d4b8ff; border-radius:10px;
+  padding:9px 11px; font-size:13px; font-weight:600;
+  font-family:'Nunito','PingFang SC',sans-serif; color:#3d2566;
+  -webkit-appearance:none; appearance:none; outline:none; width:100%;
+}
+.add-input:focus { border-color:#9c6fe4; background:#f3eeff; }
+.add-input::placeholder { color:#b9a0db; }
+
+.emoji-input { max-width:68px; text-align:center; font-size:18px; }
+
+.add-submit {
+  width:100%; margin-top:4px;
+  background:linear-gradient(135deg, #b39dff, #9c6fe4);
+  color:#fff; border:none; border-radius:12px; padding:12px 0;
+  font-size:14px; font-weight:800; font-family:'Nunito','PingFang SC',sans-serif;
+  cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:rgba(0,0,0,0);
+  -webkit-appearance:none; appearance:none;
+}
+.add-submit:active { opacity:0.8; -webkit-transform:scale(0.97); transform:scale(0.97); }
+
+.add-hint { font-size:11px; color:#b9a0db; text-align:center; margin-top:8px; font-weight:600; }
+
+/* reset button */
+.reset-btn {
+  width:100%; background:transparent; border:1.5px dashed #d4b8ff; border-radius:12px;
+  padding:10px 0; font-size:12px; font-weight:700; color:#9b6070;
+  font-family:'Nunito','PingFang SC',sans-serif; cursor:pointer; margin-top:4px;
+  touch-action:manipulation; -webkit-tap-highlight-color:rgba(0,0,0,0);
+  -webkit-appearance:none; appearance:none;
+}
+.reset-btn:active { background:#fff0f3; }
+
+/* toast notification */
+.toast {
+  position:fixed; bottom:30px; left:50%; -webkit-transform:translateX(-50%); transform:translateX(-50%);
+  background:rgba(60,35,80,0.88); color:#fff; padding:10px 22px; border-radius:30px;
+  font-size:13px; font-weight:700; font-family:'Nunito',sans-serif;
+  pointer-events:none; z-index:500; white-space:nowrap;
+  -webkit-animation:toastIn 0.3s ease both; animation:toastIn 0.3s ease both;
+}
+@-webkit-keyframes toastIn { from{opacity:0;-webkit-transform:translateX(-50%) translateY(10px);} to{opacity:1;-webkit-transform:translateX(-50%) translateY(0);} }
+@keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(10px);} to{opacity:1;transform:translateX(-50%) translateY(0);} }
+
+/* ── SHARED ── */
+@-webkit-keyframes popIn {
+  from{opacity:0;-webkit-transform:scale(0.82) translateY(10px);}
+  to  {opacity:1;-webkit-transform:scale(1) translateY(0);}
+}
+@keyframes popIn {
+  from{opacity:0;transform:scale(0.82) translateY(10px);}
+  to  {opacity:1;transform:scale(1) translateY(0);}
+}
+
+/* confetti pieces — position:fixed on individual elements, NO wrapper overlay */
+.cfp {
+  position:fixed; pointer-events:none; z-index:200;
+  -webkit-animation:cfFall linear forwards; animation:cfFall linear forwards;
+}
+@-webkit-keyframes cfFall {
+  0%  {-webkit-transform:translateY(0) rotate(0deg); opacity:1;}
+  100%{-webkit-transform:translateY(110vh) rotate(720deg); opacity:0;}
+}
+@keyframes cfFall {
+  0%  {transform:translateY(0) rotate(0deg); opacity:1;}
+  100%{transform:translateY(110vh) rotate(720deg); opacity:0;}
+}
+
+/* bg floats — position:fixed, no wrapper */
+.bgf {
+  position:fixed; pointer-events:none; z-index:0; font-size:clamp(15px,3vw,23px); opacity:0.1;
+  -webkit-animation:bgFloat linear infinite; animation:bgFloat linear infinite;
+}
+@-webkit-keyframes bgFloat {
+  0%  {-webkit-transform:translateY(110vh) rotate(0deg); opacity:0;}
+  8%  {opacity:0.1;}
+  92% {opacity:0.1;}
+  100%{-webkit-transform:translateY(-10vh) rotate(360deg); opacity:0;}
+}
+@keyframes bgFloat {
+  0%  {transform:translateY(110vh) rotate(0deg); opacity:0;}
+  8%  {opacity:0.1;}
+  92% {opacity:0.1;}
+  100%{transform:translateY(-10vh) rotate(360deg); opacity:0;}
+}
+
+@media (max-width:340px) { .food-grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <span class="crown">👑</span>
+    <h1>Ăn Gì Đây? 🍽️<br>What to Eat? / 吃什麼？</h1>
+    <p>✨ Bấm nút để chọn · Press to decide · 按下決定 ✨</p>
+  </div>
+
+  <!-- Result -->
+  <div class="result-area" id="resultArea">
+    <span class="idle-text">🤔</span>
+    <p class="idle-label">
+      Không biết ăn gì?<br>
+      Don't know what to eat?<br>
+      不知道吃什麼嗎？
+    </p>
+  </div>
+
+  <!-- Pick button -->
+  <div class="btn-wrap">
+    <button class="pick-btn" id="pickBtn" type="button">
+      🎲 Chọn Món! / Pick! / 選吧！
+    </button>
+    <span class="hint">💕 Tap / 按一下 / Nhấn vào đây!</span>
+  </div>
+
+  <!-- List section -->
+  <div class="list-section">
+    <div class="row-btn">
+      <button class="list-toggle" id="listToggle" type="button">
+        <span>🍱 Xem tất cả · See all · 查看全部</span>
+        <em class="arrow">▼</em>
+      </button>
+      <button class="edit-btn" id="editBtn" type="button">✏️ 編輯</button>
+    </div>
+
+    <!-- food grid -->
+    <div class="food-grid" id="foodGrid"></div>
+
+    <!-- add form (shown in edit mode) -->
+    <div class="add-form" id="addForm">
+      <h3>➕ 新增選項 / Add New Item / Thêm món mới</h3>
+      <div class="add-row">
+        <input class="add-input emoji-input" id="addEmoji" type="text" placeholder="🍜" maxlength="4">
+        <input class="add-input" id="addVn" type="text" placeholder="Tên món (bắt buộc) *" style="-webkit-box-flex:3;flex:3;">
+      </div>
+      <div class="add-row single">
+        <input class="add-input" id="addEn" type="text" placeholder="English name (optional)">
+      </div>
+      <div class="add-row single" style="margin-bottom:12px;">
+        <input class="add-input" id="addZh" type="text" placeholder="中文名稱（可選）">
+      </div>
+      <button class="add-submit" id="addSubmit" type="button">
+        ✨ 新增 / Add / Thêm
+      </button>
+      <button class="reset-btn" id="resetBtn" type="button">
+        🔄 還原預設選項 / Reset to defaults / Khôi phục mặc định
+      </button>
+      <p class="add-hint">資料自動儲存 · Auto-saved · Tự động lưu</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── DEFAULT FOODS ── */
+var DEFAULT_FOODS = [
+  {emoji:'🍜',vn:'Bún chả',       en:'Bun Cha',                zh:'烤豬肉米線'},
+  {emoji:'🍗',vn:'Jo li bi',       en:'Jollibee',               zh:'快樂蜂炸雞'},
+  {emoji:'🥩',vn:'Bún bò',         en:'Bun Bo',                 zh:'牛肉米線'},
+  {emoji:'🍲',vn:'Phở',            en:'Pho',                    zh:'越南河粉'},
+  {emoji:'🍜',vn:'Hủ tiếu',        en:'Hu Tieu',                zh:'粿條湯'},
+  {emoji:'🍚',vn:'Cơm tấm',        en:'Com Tam',                zh:'碎米飯'},
+  {emoji:'🍖',vn:'Cơm sườn',       en:'Com Suon',               zh:'排骨飯'},
+  {emoji:'🥟',vn:'Hoành thánh',    en:'Wonton',                 zh:'餛飩'},
+  {emoji:'🥡',vn:'Bánh bao',       en:'Banh Bao (Bun)',         zh:'包子'},
+  {emoji:'🍜',vn:'Mì tôm',         en:'Shrimp Noodles',         zh:'蝦仁泡麵'},
+  {emoji:'🦐',vn:'Há cảo',         en:'Ha Cao (Shrimp Dim Sum)',zh:'蝦餃'},
+  {emoji:'🍣',vn:'Sushi',          en:'Sushi',                  zh:'壽司'},
+  {emoji:'🐟',vn:'Sashimi',        en:'Sashimi',                zh:'生魚片'},
+  {emoji:'🥖',vn:'Bánh mì',        en:'Banh Mi',                zh:'越式法包'},
+  {emoji:'🫕',vn:'Haidilao',       en:'Haidilao Hot Pot',       zh:'海底撈火鍋'},
+  {emoji:'🍵',vn:'Bánh canh',      en:'Banh Canh',              zh:'越式粗米粉湯'},
+  {emoji:'🍙',vn:'Xôi',            en:'Xoi (Sticky Rice)',      zh:'糯米飯'},
+  {emoji:'🎂',vn:'Bánh ngọt',      en:'Banh Ngot (Pastry)',     zh:'甜點蛋糕'},
+  {emoji:'🍔',vn:'Hamburger',      en:'Hamburger',              zh:'漢堡'},
+  {emoji:'🦀',vn:'Xôi cua',        en:'Xoi Cua (Crab Rice)',    zh:'蟹肉糯米飯'}
+];
+
+var STORAGE_KEY = 'food_picker_list_v1';
+var foods = [];
+var isRolling = false;
+var editMode  = false;
+var listOpen  = false;
+var activeIdx = -1;
+var toastTimer = null;
+
+/* ── STORAGE ── */
+function loadFoods() {
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) { var p = JSON.parse(raw); if (p && p.length) return p; }
+  } catch(e) {}
+  return DEFAULT_FOODS.map(function(f){ return {emoji:f.emoji,vn:f.vn,en:f.en,zh:f.zh}; });
+}
+function saveFoods() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(foods)); } catch(e) {}
+}
+
+/* ── RENDER GRID ── */
+function renderGrid() {
+  var grid = document.getElementById('foodGrid');
+  grid.innerHTML = '';
+  foods.forEach(function(f, i) {
+    var div = document.createElement('div');
+    div.className = 'food-item' + (i === activeIdx ? ' active' : '');
+    div.id = 'fi-' + i;
+    div.innerHTML =
+      '<span class="fi-emoji">' + (f.emoji||'🍽️') + '</span>' +
+      '<div class="fi-vn">'     + escHtml(f.vn)    + '</div>' +
+      '<div class="fi-en">'     + escHtml(f.en||'') + '</div>' +
+      '<div class="fi-zh">'     + escHtml(f.zh||'') + '</div>' +
+      '<button class="del-btn" data-idx="' + i + '" type="button" aria-label="delete">×</button>';
+    grid.appendChild(div);
+  });
+  if (editMode) grid.classList.add('edit-mode');
+  else grid.classList.remove('edit-mode');
+
+  /* bind delete buttons */
+  var delBtns = grid.querySelectorAll('.del-btn');
+  for (var d = 0; d < delBtns.length; d++) {
+    delBtns[d].addEventListener('click', onDelClick);
+  }
+}
+
+function onDelClick(e) {
+  e.stopPropagation();
+  var idx = parseInt(this.getAttribute('data-idx'), 10);
+  if (foods.length <= 1) { showToast('⚠️ 至少保留一個選項！'); return; }
+  if (idx === activeIdx) activeIdx = -1;
+  else if (idx < activeIdx) activeIdx--;
+  foods.splice(idx, 1);
+  saveFoods();
+  renderGrid();
+  showToast('🗑️ 已刪除 / Deleted!');
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ── PICK ── */
+function pickFood() {
+  if (isRolling || foods.length === 0) return;
+  isRolling = true;
+
+  var btn  = document.getElementById('pickBtn');
+  var area = document.getElementById('resultArea');
+  btn.disabled = true;
+
+  var items = document.querySelectorAll('.food-item');
+  for (var j = 0; j < items.length; j++) items[j].classList.remove('active');
+  activeIdx = -1;
+
+  var rolls   = 0;
+  var maxRoll = 20 + Math.floor(Math.random() * 8);
+  var delay   = 55;
+
+  function rollStep() {
+    var idx = Math.floor(Math.random() * foods.length);
+    var f   = foods[idx];
+    area.innerHTML =
+      '<span class="food-emoji spinning">' + (f.emoji||'🍽️') + '</span>' +
+      '<div class="food-name-vn">'         + escHtml(f.vn)    + '</div>' +
+      '<div class="food-name-en">'         + escHtml(f.en||'') + '</div>' +
+      '<div class="food-name-zh">'         + escHtml(f.zh||'') + '</div>';
+    rolls++;
+    if (rolls < maxRoll) {
+      if (delay < 215) delay *= 1.08;
+      setTimeout(rollStep, Math.round(delay));
+    } else {
+      var fi = Math.floor(Math.random() * foods.length);
+      var fn = foods[fi];
+      activeIdx = fi;
+      area.innerHTML =
+        '<div class="result-reveal">' +
+          '<span class="food-emoji">' + (fn.emoji||'🍽️') + '</span>' +
+          '<div class="food-name-vn">' + escHtml(fn.vn) + '</div>' +
+          '<div class="food-name-en">' + escHtml(fn.en||'') + '</div>' +
+          '<div class="food-name-zh">' + escHtml(fn.zh||'') + '</div>' +
+        '</div>';
+      var el = document.getElementById('fi-' + fi);
+      if (el) el.classList.add('active');
+      launchConfetti();
+      btn.disabled = false;
+      isRolling = false;
+    }
+  }
+  rollStep();
+}
+
+/* ── TOGGLE LIST ── */
+function toggleList() {
+  listOpen = !listOpen;
+  document.getElementById('listToggle').classList.toggle('open', listOpen);
+  document.getElementById('foodGrid').classList.toggle('open', listOpen);
+  document.getElementById('editBtn').style.display = listOpen ? '' : 'none';
+  if (!listOpen && editMode) setEditMode(false);
+}
+
+/* ── EDIT MODE ── */
+function toggleEdit() {
+  setEditMode(!editMode);
+}
+function setEditMode(on) {
+  editMode = on;
+  var btn = document.getElementById('editBtn');
+  var grid = document.getElementById('foodGrid');
+  var form = document.getElementById('addForm');
+  btn.classList.toggle('active', on);
+  btn.textContent = on ? '✅ 完成 / Done' : '✏️ 編輯';
+  grid.classList.toggle('edit-mode', on);
+  form.classList.toggle('open', on);
+}
+
+/* ── ADD FOOD ── */
+function addFood() {
+  var emojiEl = document.getElementById('addEmoji');
+  var vnEl    = document.getElementById('addVn');
+  var enEl    = document.getElementById('addEn');
+  var zhEl    = document.getElementById('addZh');
+
+  var vn = vnEl.value.trim();
+  if (!vn) { showToast('⚠️ 請填寫越文名稱！'); vnEl.focus(); return; }
+
+  foods.push({
+    emoji: emojiEl.value.trim() || '🍽️',
+    vn:    vn,
+    en:    enEl.value.trim() || vn,
+    zh:    zhEl.value.trim() || vn
+  });
+  saveFoods();
+  renderGrid();
+
+  emojiEl.value = '';
+  vnEl.value    = '';
+  enEl.value    = '';
+  zhEl.value    = '';
+  showToast('✅ 已新增！/ Added!');
+}
+
+/* ── RESET ── */
+function resetFoods() {
+  if (!confirm('還原到預設20個選項？\nReset to default 20 items?')) return;
+  foods = DEFAULT_FOODS.map(function(f){ return {emoji:f.emoji,vn:f.vn,en:f.en,zh:f.zh}; });
+  activeIdx = -1;
+  saveFoods();
+  renderGrid();
+  showToast('🔄 已還原 / Reset done!');
+}
+
+/* ── CONFETTI — individual fixed elements, NO full-screen overlay ── */
+function launchConfetti() {
+  var colors = ['#ff8fab','#ffb347','#b5ead7','#c7b2f7','#ffd700','#ff6b9d','#85d8f5'];
+  for (var i = 0; i < 52; i++) {
+    (function() {
+      var p   = document.createElement('div');
+      p.className = 'cfp';
+      var sz  = 7 + Math.random() * 9;
+      var dur = 1.4 + Math.random() * 1.3;
+      var del = Math.random() * 0.4;
+      p.style.cssText =
+        'left:'               + (Math.random()*100) + '%;' +
+        'top:-10px;'                                        +
+        'width:'              + sz  + 'px;'                +
+        'height:'             + sz  + 'px;'                +
+        'background:'         + colors[Math.floor(Math.random()*colors.length)] + ';' +
+        'border-radius:'      + (Math.random()>.5?'50%':'3px') + ';'  +
+        'animation-duration:' + dur + 's;'                +
+        'animation-delay:'    + del + 's;';
+      /* append to body — no wrapper overlay */
+      document.body.appendChild(p);
+      setTimeout(function(){ if(p.parentNode)p.parentNode.removeChild(p); },
+        Math.round((dur+del+0.6)*1000));
+    })();
+  }
+}
+
+/* ── TOAST ── */
+function showToast(msg) {
+  var old = document.querySelector('.toast');
+  if (old) old.parentNode.removeChild(old);
+  if (toastTimer) clearTimeout(toastTimer);
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  toastTimer = setTimeout(function(){ if(t.parentNode)t.parentNode.removeChild(t); }, 2200);
+}
+
+/* ── BG FLOATS — each element appended to body with position:fixed directly ── */
+(function() {
+  var bgEmojis = ['🍜','🍣','🥟','🍔','🍚','🌸','✨','💕','🦀','🥖','🍙','🌺'];
+  bgEmojis.forEach(function(e) {
+    var el = document.createElement('span');
+    el.className = 'bgf';
+    el.textContent = e;
+    el.style.left = (Math.random()*90) + '%';
+    el.style.animationDuration = (13 + Math.random()*10) + 's';
+    el.style.animationDelay   = '-' + (Math.random()*13) + 's';
+    document.body.appendChild(el);
+  });
+})();
+
+/* ── INIT ── */
+foods = loadFoods();
+renderGrid();
+
+/* hide edit button initially (list is closed) */
+document.getElementById('editBtn').style.display = 'none';
+
+/* ── EVENT LISTENERS — addEventListener is more reliable on mobile than onclick ── */
+document.getElementById('pickBtn').addEventListener('click', pickFood);
+document.getElementById('listToggle').addEventListener('click', toggleList);
+document.getElementById('editBtn').addEventListener('click', toggleEdit);
+document.getElementById('addSubmit').addEventListener('click', addFood);
+document.getElementById('resetBtn').addEventListener('click', resetFoods);
+
+/* Enter key in add form */
+['addEmoji','addVn','addEn','addZh'].forEach(function(id) {
+  document.getElementById(id).addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') addFood();
+  });
+});
+
+/* keyboard shortcut (desktop) */
+document.addEventListener('keydown', function(e) {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === ' ' || e.key === 'Enter') pickFood();
+});
+</script>
+</body>
+</html>
